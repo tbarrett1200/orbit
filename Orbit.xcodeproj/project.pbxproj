@@ -7,9 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		329560441E6C508200EE2C85 /* ColorTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 329560431E6C508200EE2C85 /* ColorTheme.swift */; };
+		3297D9361E6C5EEA00C052E7 /* Satellite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3297D9351E6C5EEA00C052E7 /* Satellite.swift */; };
 		32E757591E6B86FA00723251 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32E757581E6B86FA00723251 /* AppDelegate.swift */; };
 		32E7575B1E6B86FB00723251 /* GameScene.sks in Resources */ = {isa = PBXBuildFile; fileRef = 32E7575A1E6B86FB00723251 /* GameScene.sks */; };
-		32E7575D1E6B86FB00723251 /* Actions.sks in Resources */ = {isa = PBXBuildFile; fileRef = 32E7575C1E6B86FB00723251 /* Actions.sks */; };
 		32E7575F1E6B86FB00723251 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32E7575E1E6B86FB00723251 /* GameScene.swift */; };
 		32E757611E6B86FB00723251 /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32E757601E6B86FB00723251 /* GameViewController.swift */; };
 		32E757641E6B86FB00723251 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 32E757621E6B86FB00723251 /* Main.storyboard */; };
@@ -18,10 +19,11 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		329560431E6C508200EE2C85 /* ColorTheme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ColorTheme.swift; sourceTree = "<group>"; };
+		3297D9351E6C5EEA00C052E7 /* Satellite.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Satellite.swift; sourceTree = "<group>"; };
 		32E757551E6B86FA00723251 /* Orbit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Orbit.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		32E757581E6B86FA00723251 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		32E7575A1E6B86FB00723251 /* GameScene.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = GameScene.sks; sourceTree = "<group>"; };
-		32E7575C1E6B86FB00723251 /* Actions.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = Actions.sks; sourceTree = "<group>"; };
 		32E7575E1E6B86FB00723251 /* GameScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScene.swift; sourceTree = "<group>"; };
 		32E757601E6B86FB00723251 /* GameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewController.swift; sourceTree = "<group>"; };
 		32E757631E6B86FB00723251 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -62,8 +64,9 @@
 			children = (
 				32E757581E6B86FA00723251 /* AppDelegate.swift */,
 				32E7575A1E6B86FB00723251 /* GameScene.sks */,
-				32E7575C1E6B86FB00723251 /* Actions.sks */,
 				32E7575E1E6B86FB00723251 /* GameScene.swift */,
+				3297D9351E6C5EEA00C052E7 /* Satellite.swift */,
+				329560431E6C508200EE2C85 /* ColorTheme.swift */,
 				32E757601E6B86FB00723251 /* GameViewController.swift */,
 				32E757621E6B86FB00723251 /* Main.storyboard */,
 				32E757651E6B86FB00723251 /* Assets.xcassets */,
@@ -137,7 +140,6 @@
 				32E7575B1E6B86FB00723251 /* GameScene.sks in Resources */,
 				32E757661E6B86FB00723251 /* Assets.xcassets in Resources */,
 				32E757691E6B86FB00723251 /* LaunchScreen.storyboard in Resources */,
-				32E7575D1E6B86FB00723251 /* Actions.sks in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -149,6 +151,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				32E7575F1E6B86FB00723251 /* GameScene.swift in Sources */,
+				3297D9361E6C5EEA00C052E7 /* Satellite.swift in Sources */,
+				329560441E6C508200EE2C85 /* ColorTheme.swift in Sources */,
 				32E757611E6B86FB00723251 /* GameViewController.swift in Sources */,
 				32E757591E6B86FA00723251 /* AppDelegate.swift in Sources */,
 			);
@@ -275,6 +279,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				DEVELOPMENT_TEAM = 55523JQQBA;
 				INFOPLIST_FILE = Orbit/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = tbarrett.Orbit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -288,6 +293,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				DEVELOPMENT_TEAM = 55523JQQBA;
 				INFOPLIST_FILE = Orbit/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = tbarrett.Orbit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -314,6 +320,7 @@
 				32E7576F1E6B86FB00723251 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
