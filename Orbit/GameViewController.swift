@@ -9,27 +9,22 @@
 import UIKit
 import SpriteKit
 import GameplayKit
+import GameKit
 
-class GameViewController: UIViewController {
-
+class GameViewController: UIViewController, GKGameCenterControllerDelegate {
+    
+    static var controller : GameViewController?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        authenticateLocalPlayer()
+        GameViewController.controller = self
         if let view = self.view as! SKView? {
-            // Load the SKScene from 'GameScene.sks'
-            if let scene = SKScene(fileNamed: "GameScene") {
-                // Set the scale mode to scale to fit the window
-                scene.scaleMode = .aspectFill
-                
-                // Present the scene
+            if let scene = GameScene(fileNamed: "GameScene") {
+                scene.scaleMode = .resizeFill
                 view.presentScene(scene)
             }
-            
             view.ignoresSiblingOrder = true
-            view.showsPhysics = true;
-
-            view.showsFPS = true
-            view.showsNodeCount = true
         }
     }
 
@@ -37,17 +32,50 @@ class GameViewController: UIViewController {
         return true
     }
 
+    func authenticateLocalPlayer(){
+        let localPlayer = GKLocalPlayer.localPlayer()
+        localPlayer.authenticateHandler = { viewController, error in
+            if let controller = viewController {
+                self.present(controller, animated: true, completion: nil)
+            } else if localPlayer.isAuthenticated {
+                print("Authentication Succeeded")
+            } else {
+                print("Authentication Failed")
+            }
+        }
+    }
+    
+
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
         if UIDevice.current.userInterfaceIdiom == .phone {
-            return .allButUpsideDown
+            return .portrait
         } else {
             return .all
         }
     }
 
+    func gameCenterViewControllerDidFinish(_ gameCenterViewController: GKGameCenterViewController) {
+        gameCenterViewController.dismiss(animated: true, completion: nil)
+        if let view = self.view as! SKView? {
+            if let scene = GameScene(fileNamed: "GameScene") {
+                scene.scaleMode = .resizeFill
+                view.presentScene(scene)
+            }
+            view.ignoresSiblingOrder = true
+        }
+    }
+    
+    
+    func didClickLeaderboard() {
+        let gc = GKGameCenterViewController()
+        gc.gameCenterDelegate = self
+        gc.viewState = GKGameCenterViewControllerState.leaderboards
+        gc.leaderboardIdentifier = "com.tbarrett.stickyOrbit.highScore"
+        present(gc, animated: true, completion: nil)
+    }
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
-        // Release any cached data, images, etc that aren't in use.
     }
 
     override var prefersStatusBarHidden: Bool {

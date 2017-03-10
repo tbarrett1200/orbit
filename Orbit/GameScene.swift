@@ -8,164 +8,241 @@
 
 import SpriteKit
 import GameplayKit
+import GameKit
+
+
+protocol ButtonDelegate {
+    func didClickLeaderboard() -> Void
+    func didClickHelp() -> Void
+}
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
     
-    private var label : SKLabelNode!
+    private var scoreLabel : SKLabelNode!
+    private var bestLabel : SKLabelNode!
+    private var restart : SKLabelNode!
     private var leaderboard : SKSpriteNode!
-    private var pause : SKSpriteNode!
+    private var help : SKSpriteNode!
    
-    private var orbit1 : SKNode!
-    private var orbit2 : SKNode!
-    private var orbit3 : SKNode!
-    private var satellite : SKShapeNode!
+    private var satellite : Satellite!
+    private var star : Satellite!
+    
+    private var orbits = [Orbit]()
+    private var planets = [SKShapeNode]()
+    private var obstacles = [Satellite]()
+    private var game = SKNode()
     
     private var linearSpeed : CGFloat = 100
-    private var satelliteSpeed : CGFloat = 100
-    private var satelliteDirection : CGFloat = 1
     
     private var time : Double = 0
     private var lastTime : Double = 0
     
+    public static var playerCategory : UInt32 = 1
+    public static var starCategory : UInt32 = 2
+    public static var obstacleCategory : UInt32 = 4
+    public static var planetCategory : UInt32 = 8
+    public static var otherCategory : UInt32 = 2 | 4 | 8
+    
+    public var buttonDelegate : ButtonDelegate?
+    
+    private var score : Int = 0 {
+        didSet {
+            scoreLabel?.text = "\(score)"
+        }
+    }
+    
+    private var highScore : Int {
+        get {
+            return UserDefaults.standard.integer(forKey: "highScore")
+        }
+        set(score) {
+            UserDefaults.standard.set(score, forKey: "highScore")
+            bestLabel.text = "Best: \(score)"
+            let localPlayer = GKLocalPlayer.localPlayer()
+            if localPlayer.isAuthenticated {
+                let score = GKScore(leaderboardIdentifier: "com.tbarrett.StickyOrbit.highScore", player: localPlayer)
+                score.value = Int64(highScore)
+                GKScore.report([score], withCompletionHandler: nil)
+            }
+        }
+    }
+
     override func didMove(to view: SKView) {
-        
         physicsWorld.contactDelegate = self
         
-        label = childNode(withName: "Label") as! SKLabelNode?
-        leaderboard = childNode(withName: "Leaderbord") as! SKSpriteNode?
-        pause = childNode(withName: "Pause") as! SKSpriteNode?
+        leaderboard = childNode(withName: "Leaderboard") as! SKSpriteNode?
+        leaderboard.position.x = -frame.width/2 + 50
+        leaderboard.position.y = frame.height/2 - 50
 
-        orbit1 = makeOrbit(radius: 100, vertical: false)
-        orbit1.run(SKAction.repeatForever(SKAction.rotate(byAngle: linearSpeed/100, duration: 1)))
-        addChild(orbit1)
+        help = childNode(withName: "Help") as! SKSpriteNode?
+        help.position.x = frame.width/2 - 50
+        help.position.y = frame.height/2 - 50
         
-        orbit2 = makeOrbit(radius: 200, vertical: false)
-        orbit2.run(SKAction.repeatForever(SKAction.rotate(byAngle: -linearSpeed/200, duration: 1)))
-        addChild(orbit2)
+        scoreLabel = childNode(withName: "Score") as! SKLabelNode?
+        scoreLabel.position.y = help.frame.midY
         
-        orbit3 = makeOrbit(radius: 300, vertical: false)
-        orbit3.run(SKAction.repeatForever(SKAction.rotate(byAngle: linearSpeed/300, duration: 1)))
-        addChild(orbit3)
-        
-        
-        let star = makeStar(radius: 20)
-        star.position = CGPoint(x: 50, y: 0)
-        orbit3.children[1].addChild(star)
-        star.parent?.run(SKAction.repeatForever(SKAction.rotate(byAngle: satelliteSpeed / 50, duration: 1)))
+        bestLabel = childNode(withName: "Best") as! SKLabelNode?
+        bestLabel.text = "Best: \(highScore)"
+        bestLabel.position.y = help.frame.minY
 
+        restart = childNode(withName: "Restart") as! SKLabelNode?
+        restart.position.y = -frame.height/2 + 50
+        restart.isHidden = true
         
-        satellite = makeSatellite(radius: 25)
-        satellite.position = CGPoint(x: 50, y: 0)
-        orbit1.children[1].addChild(satellite)
-        satellite.parent?.run(SKAction.repeatForever(SKAction.rotate(byAngle: satelliteSpeed / 50, duration: 1)))
+        orbits.append(Orbit(radius: 100, vertical: false, linearSpeed: linearSpeed, &planets))
+        orbits.append(Orbit(radius: 200, vertical: false, linearSpeed: -linearSpeed, &planets))
+        orbits.append(Orbit(radius: 300, vertical: false, linearSpeed: linearSpeed, &planets))
+        
+        for orbit in orbits {
+            game.addChild(orbit)
+        }
+        
+        satellite = Satellite(radius: 25, orbit: 50, color: ColorTheme.dark)
+        satellite.ball.physicsBody = SKPhysicsBody(circleOfRadius: 30)
+        satellite.ball.physicsBody?.categoryBitMask = GameScene.playerCategory
+        satellite.ball.physicsBody?.contactTestBitMask = GameScene.otherCategory
+        satellite.ball.physicsBody?.collisionBitMask = 0
+        emptyPlanet().addChild(satellite)
+        
+        star = Satellite(radius: 20, orbit: 50, color: ColorTheme.yellow)
+        star.ball.physicsBody = SKPhysicsBody(circleOfRadius: 20)
+        star.ball.physicsBody?.categoryBitMask = GameScene.starCategory
+        star.ball.physicsBody?.collisionBitMask = 0x0
+        emptyPlanet().addChild(star)
 
+        obstacles.append(Satellite(radius: 20, orbit: 50, color:  ColorTheme.red))
+        obstacles.append(Satellite(radius: 20, orbit: 50, color:  ColorTheme.red))
+
+        for obstacle in obstacles {
+            obstacle.ball.physicsBody = SKPhysicsBody(circleOfRadius: 20)
+            obstacle.ball.physicsBody?.categoryBitMask = GameScene.obstacleCategory
+            obstacle.ball.physicsBody?.collisionBitMask = 0x0
+            emptyPlanet().addChild(obstacle)
+        }
+        
+        let upper = bestLabel.frame.minY
+        let lower = restart.frame.maxY
+
+        game.position.y = (upper + lower)/2
+        addChild(game)
     }
 
-    func makeOrbit(radius: CGFloat, vertical: Bool) -> SKNode {
-        let node = SKNode()
-        
-        let path = makePath(radius: radius)
-        node.addChild(path)
-        
-        let position1 = vertical ? CGPoint(x: 0, y: radius) : CGPoint(x: radius, y: 0)
-        let position2 = vertical ? CGPoint(x: 0, y: -radius) : CGPoint(x: -radius, y: 0)
-        
-        let ball1 = makeBall(radius: 25)
-        ball1.position = position1
-        node.addChild(ball1)
-        
-        let ball2 = makeBall(radius: 25)
-        ball2.position = position2
-        node.addChild(ball2)
-        
-        return node
-    }
-    
-    func makeStar(radius: CGFloat) -> SKShapeNode {
-        let ball = SKShapeNode(circleOfRadius: radius)
-        ball.fillColor = ColorTheme.yellow
-        ball.strokeColor = ColorTheme.yellow
-        ball.zPosition = 1
-        return ball
-    }
-    func makeSatellite(radius: CGFloat) -> SKShapeNode {
-        let ball = SKShapeNode(circleOfRadius: radius)
-        ball.fillColor = ColorTheme.dark
-        ball.strokeColor = ColorTheme.dark
-        ball.zPosition = 1
-        ball.physicsBody = SKPhysicsBody(circleOfRadius: radius + 5)
-        ball.physicsBody?.categoryBitMask = 0x02
-        ball.physicsBody?.collisionBitMask = 0x0
-        return ball
-    }
-    
-    func makeBall(radius: CGFloat) -> SKShapeNode {
-        let ball = SKShapeNode(circleOfRadius: radius)
-        ball.fillColor = ColorTheme.blue
-        ball.strokeColor = ColorTheme.blue
-        ball.zPosition = 1
-        ball.name = "Ball"
-        ball.physicsBody = SKPhysicsBody(circleOfRadius: radius + 5)
-        ball.physicsBody?.contactTestBitMask = 0x02
-        ball.physicsBody?.collisionBitMask = 0x0
-        
-        let path = makePath(radius: radius + 25)
-        ball.addChild(path)
-        
-        return ball
-    }
-    
-    func makePath(radius: CGFloat) -> SKShapeNode {
-        let path = SKShapeNode(circleOfRadius: radius)
-        path.fillColor = .clear
-        path.strokeColor = ColorTheme.grey
-        path.lineWidth = 2
-        path.zPosition = 0
-        return path
-    }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        satellite.parent?.removeAllActions()
-        satelliteSpeed = 200
-        satellite.parent?.run(SKAction.repeatForever(SKAction.rotate(byAngle: satelliteDirection * satelliteSpeed / 50, duration: 1)))
+        if help.contains(touches.first!.location(in: self)) {
+           didClickHelp()
+        } else if leaderboard.contains(touches.first!.location(in: self)) {
+            didClickLeaderboard()
+        } else if isPaused {
+            restartGame()
+        } else {
+            satellite.speedUp()
+        }
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        satellite.parent?.removeAllActions()
-        satelliteSpeed = 100
-        satellite.parent?.run(SKAction.repeatForever(SKAction.rotate(byAngle: satelliteDirection * satelliteSpeed / 50, duration: 1)))
+        satellite.slowDown()
+    }
+    
+    func emptyPlanet() -> SKShapeNode {
+        var planet : SKShapeNode
+        
+        repeat {
+            planet = planets[Int(arc4random_uniform(UInt32(planets.count)))]
+        } while planet.children.count != 1
+
+        return planet
     }
     
     func didBegin(_ contact: SKPhysicsContact) {
+        let body = contact.bodyA.categoryBitMask == GameScene.playerCategory ? contact.bodyB : contact.bodyA
+        let node = body.node!
+        let category = body.categoryBitMask
+        
+        switch category {
+        case GameScene.starCategory: didScore()
+        case GameScene.obstacleCategory: didLose()
+        case GameScene.planetCategory: didContact(planet: node)
+        default: print("Contacted Unknown Physics Body")
+        }
+    }
+    
+    func didContact(planet: SKNode) {
         guard time - lastTime > 1 else {
             return
         }
         
-        if contact.bodyA.node !== satellite.parent {
-        
+        if planet !== satellite.parent {
             lastTime = time
-            
-            let oldLocation = convert(satellite.position, from: satellite.parent!)
-            let newLocation = convert(oldLocation, to: contact.bodyA.node!)
-        
-            satellite.parent?.removeAllActions()
             satellite.removeFromParent()
-            satellite.position = newLocation
-            
-            var angle = atan(newLocation.y/newLocation.x)
-            angle = satellite.position.x < 0 ? CGFloat.pi + angle : angle
-            print(angle)
-
-            satellite.position.x = 50 * cos(angle)
-            satellite.position.y = 50 * sin(angle)
-            
-            contact.bodyA.node?.addChild(satellite)
-            satelliteDirection *= -1
-            satellite.parent?.run(SKAction.repeatForever(SKAction.rotate(byAngle: satelliteDirection * satelliteSpeed / 50, duration: 1)))
+            satellite.zRotation += CGFloat.pi
+            planet.addChild(satellite)
+            satellite.changeDirection()
         }
+    }
+        
+    func didScore() {
+        for obstacle in self.obstacles {
+            obstacle.removeFromParent()
+            self.emptyPlanet().addChild(obstacle)
+
+        }
+        
+        self.star.removeFromParent()
+        self.emptyPlanet().addChild(self.star)
+        
+        score += 1
+    }
+    
+    func didClickHelp() {
+        if let scene = SKScene(fileNamed: "TutorialScene") {
+            scene.scaleMode = .resizeFill
+            view?.presentScene(scene)
+        }
+        view?.ignoresSiblingOrder = true
+    }
+    
+    func didClickLeaderboard() {
+        GameViewController.controller?.didClickLeaderboard()
+    }
+    
+    func didLose() {
+        if score > highScore {
+            highScore = score
+        }
+        isPaused = true
+        restart.isHidden = false
+    }
+
+    func restartGame() {
+
+        for node in [satellite!, star!, obstacles[0], obstacles[1]]{
+            node.removeFromParent()
+            emptyPlanet().addChild(node)
+            restart.isHidden = true
+        }
+        isPaused = false
+        score = 0
     }
     
     override func update(_ currentTime: TimeInterval) {
         time = currentTime
+        
+        for node in [satellite!, star!, obstacles[0], obstacles[1]] {
+            if node.parent?.parent === orbits[1] {
+                if node.direction == 1 {
+                    node.changeDirection()
+                }
+            } else if node.parent?.parent === orbits[0] {
+                if node.direction == -1 {
+                    node.changeDirection()
+                }
+            } else if node.parent?.parent === orbits[2] {
+                if node.direction == -1 {
+                    node.changeDirection()
+                }
+            }
+        }
     }
 }
+

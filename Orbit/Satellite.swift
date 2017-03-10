@@ -13,9 +13,10 @@ class Satellite: SKNode {
     
     private var radius : CGFloat!
     public var ball : SKShapeNode!
-    private var direction : CGFloat = 1
+    public var direction : CGFloat = 1
     private var tangentialSpeed : CGFloat = 50
     
+   
     init(radius: CGFloat, orbit: CGFloat, color: UIColor) {
         super.init()
 
@@ -25,30 +26,30 @@ class Satellite: SKNode {
         ball.fillColor = color
         ball.strokeColor = color
         ball.zPosition = 1
-        ball.physicsBody = SKPhysicsBody(circleOfRadius: radius + 5)
-        ball.physicsBody?.categoryBitMask = 0x02
-        ball.physicsBody?.collisionBitMask = 0x0
         ball.position = CGPoint(x: orbit, y: 0)
         addChild(ball)
         
         run(SKAction.repeatForever(SKAction.rotate(byAngle: direction * tangentialSpeed / radius, duration: 1)))
     }
     
-    public func updateOrbit() {
-        removeAllActions()
-        run(SKAction.repeatForever(SKAction.rotate(byAngle: direction * tangentialSpeed / radius, duration: 1)))
+    public func speedUp() {
+        tangentialSpeed = 200
+        updateOrbit()
     }
     
-    public func fast() {
-        tangentialSpeed = 100
-    }
-    
-    public func slow() {
+    public func slowDown() {
         tangentialSpeed = 50
+        updateOrbit()
     }
     
     public func changeDirection() {
         direction *= -1
+        updateOrbit()
+    }
+    
+    private func updateOrbit() {
+        removeAllActions()
+        run(SKAction.repeatForever(SKAction.rotate(byAngle: direction * tangentialSpeed / radius, duration: 1)))
     }
     
     required init?(coder aDecoder: NSCoder) {
